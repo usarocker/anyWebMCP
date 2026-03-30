@@ -1,0 +1,19 @@
+{
+  "name": "anywebmcp",
+  "version": "1.0.0",
+  "description": "Any web page can be a WebMCP Tool.",
+  "type": "module",
+  "scripts": {
+    "build": "pnpm clean && esbuild src/scripts/*.ts src/popup/*.ts src/options/*.ts --bundle --outdir=dist --platform=browser --target=chrome100 --outbase=src",
+    "watch": "esbuild src/scripts/*.ts src/popup/*.ts src/options/*.ts --bundle --outdir=dist --platform=browser --target=chrome100 --outbase=src --watch",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.306",
+    "esbuild": "^0.27.4",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "uuid": "^11.1.0"
+  }
+}

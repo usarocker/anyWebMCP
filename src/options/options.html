@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>anyWebMCP Configuration</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f5f5f5;
+      overflow: hidden; /* Prevent full page scrolling */
+    }
+
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* Top Navigation Bar */
+    .header {
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+      padding: 0 20px;
+      height: 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      z-index: 10;
+    }
+
+    h1 { margin: 0; font-size: 20px; color: #333; }
+    
+    .header-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    /* Main Layout: Left-Right Split */
+    .main-layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden; /* Internal scrolling */
+    }
+
+    /* Left Sidebar */
+    .sidebar {
+      width: 300px;
+      background: #fff;
+      border-right: 1px solid #ddd;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .sidebar-header {
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+      background: #fafafa;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+
+    #config-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .nav-item {
+      padding: 12px 15px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .nav-item:hover {
+      background: #f9f9f9;
+    }
+
+    .nav-item.active {
+      background: #e3f2fd;
+      border-left: 4px solid #2196F3;
+      padding-left: 11px; /* Compensate for border width */
+    }
+
+    .nav-item h3 {
+      margin: 0 0 4px 0;
+      font-size: 14px;
+      color: #333;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .nav-item p {
+      margin: 0;
+      font-size: 12px;
+      color: #888;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Right Content Area */
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 30px;
+      background: #f5f5f5;
+    }
+
+    /* Welcome/Empty State */
+    .welcome-state {
+      text-align: center;
+      color: #888;
+      margin-top: 100px;
+    }
+    .welcome-state h2 { color: #555; }
+
+    /* Form Container */
+    .editor-container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      max-width: 800px;
+      margin: 0 auto;
+      display: none; /* Hidden by default */
+    }
+    .editor-container.visible { display: block; }
+
+    .editor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #eee;
+    }
+    .editor-header h2 { margin: 0; }
+
+    /* Form Element Styles */
+    .form-group { margin-bottom: 20px; }
+    label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 13px; color: #444; }
+    input[type="text"], input[type="number"], textarea, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: #2196F3;
+      outline: none;
+    }
+    .input-row { 
+      display: flex; 
+      gap: 10px; 
+      margin-bottom: 10px; 
+      align-items: center;
+      background: #fafafa;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #eee;
+    }
+    .input-row input { flex: 1; }
+    
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .checkbox-group input { width: auto; }
+    .checkbox-group label { margin: 0; font-weight: normal; }
+
+    /* Tool Definition Box */
+    .tool-box {
+      border: 2px solid #bbb; /* Bold and deeper color */
+      background-color: #fff; /* Solid white for contrast */
+      padding: 25px;
+      border-radius: 8px;
+      margin-top: 35px;
+      position: relative;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05); /* Slight shadow */
+    }
+    .tool-box-title {
+      position: absolute;
+      top: -12px;
+      left: 15px;
+      background: #fff; /* Match background */
+      padding: 0 12px;
+      font-size: 13px;
+      font-weight: bold;
+      color: #333; /* Darker text */
+      text-transform: uppercase;
+      border: 2px solid #bbb; /* Add border for unified look */
+      border-radius: 4px;
+    }
+
+    /* Button Styles */
+    .btn {
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      border: none;
+      transition: background 0.2s;
+    }
+    .btn-primary { background: #2196F3; color: white; }
+    .btn-primary:hover { background: #1976D2; }
+    .btn-secondary { background: #fff; border: 1px solid #ccc; color: #333; }
+    .btn-secondary:hover { background: #f0f0f0; }
+    .btn-danger { background: #fff; border: 1px solid #ffcccc; color: #d32f2f; }
+    .btn-danger:hover { background: #ffebee; }
+    
+    .btn-sm { padding: 4px 8px; font-size: 12px; }
+
+    .hidden { display: none !important; }
+
+    /* Dialog Styles */
+    dialog {
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      padding: 20px;
+      max-width: 600px;
+      width: 100%;
+    }
+    dialog::backdrop {
+      background: rgba(0, 0, 0, 0.5);
+    }
+    .dialog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .dialog-header h3 { margin: 0; }
+    .code-block {
+      background: #f5f5f5;
+      padding: 15px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+      overflow-x: auto;
+      border: 1px solid #ddd;
+      margin-bottom: 15px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="header">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <img src="../../public/icon-48.png" id="app-logo" width="32" height="32" alt="Logo">
+        <h1>anyWebMCP</h1>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" id="import-btn">Import JSON</button>
+        <button class="btn btn-secondary" id="export-btn">Export JSON</button>
+        <button class="btn btn-primary" id="add-config-btn">+ New Tool</button>
+      </div>
+    </div>
+
+    <div class="main-layout">
+      <!-- Left List -->
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <input type="text" id="search-box" class="search-box" placeholder="Search tools...">
+        </div>
+        <div id="config-list">
+          <!-- Dynamically generated list items -->
+        </div>
+      </div>
+
+      <!-- Right Content Area -->
+      <div class="content-area">
+        <!-- Welcome/Empty State -->
+        <div id="welcome-state" class="welcome-state">
+          <h2>Select a tool to edit</h2>
+          <p>Or click "+ New Tool" to create a new one.</p>
+        </div>
+
+        <!-- Edit Form -->
+        <div id="editor-container" class="editor-container">
+          <div class="editor-header">
+            <h2 id="editor-title">Edit Configuration</h2>
+            <button type="button" class="btn btn-danger" id="delete-btn">Delete Tool</button>
+          </div>
+
+          <form id="config-form">
+            <input type="hidden" id="config-id">
+            
+            <!-- Target Section -->
+            <div class="form-group">
+              <label>Entry URL <span style="font-weight:normal; color:#666">(Optional: Start URL to launch tool)</span></label>
+              <div style="display:flex; gap:10px;">
+                <input type="text" id="entry-url" placeholder="https://example.com/start-page">
+                <button type="button" class="btn btn-secondary" id="test-entry-btn" title="Open in new tab">↗</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>URL Pattern <span style="font-weight:normal; color:#666">(e.g., *://example.com/*)</span></label>
+              <input type="text" id="url-pattern" required>
+            </div>
+
+            <!-- Execution Section -->
+            <div style="display: flex; gap: 20px; align-items: flex-end;">
+              <div class="form-group" style="flex: 1;">
+                <label>Submit Button Selector</label>
+                <input type="text" id="submit-selector" required placeholder="e.g. button[type='submit']">
+              </div>
+              <div class="form-group checkbox-group" style="flex: 0 0 250px; margin-bottom: 30px;">
+                <input type="checkbox" id="spa-mode" checked>
+                <label for="spa-mode" title="Checked: Results appear on the current page (SPA/Ajax); Unchecked: Results appear on a new page after click (Full page refresh)">SPA - Results appear on current page</label>
+              </div>
+            </div>
+
+            <!-- Tool Definition Group (API Spec) -->
+            <div class="tool-box">
+              <span class="tool-box-title">Tool Definition (API Spec)</span>
+              
+              <div class="form-group">
+                <label>Tool Name <span style="font-weight:normal; color:#666">(Unique identifier for AI)</span></label>
+                <input type="text" id="tool-name" required pattern="^[a-zA-Z0-9_]+$">
+              </div>
+
+              <div class="form-group">
+                <label>Description <span style="font-weight:normal; color:#666">(Explain usage to AI)</span></label>
+                <textarea id="description" rows="3" required></textarea>
+              </div>
+              
+              <div class="form-group checkbox-group">
+                 <input type="checkbox" id="readonly-hint">
+                 <label for="readonly-hint">Read-Only Tool <span style="color:#666; font-size:12px;">(Hints to AI that this tool doesn't modify state)</span></label>
+              </div>
+
+              <div class="form-group">
+                <label>Inputs</label>
+                <div id="inputs-container">
+                  <!-- Input rows -->
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" id="add-input-btn" style="margin-top:5px">+ Add Input Parameter</button>
+              </div>
+            </div>
+
+            <!-- Output Configuration Group -->
+            <div class="tool-box" style="margin-top: 20px;">
+              <span class="tool-box-title">Output Configuration</span>
+              
+              <div style="display: flex; gap: 20px; align-items: flex-end; margin-bottom: 10px;">
+                <div class="form-group" style="flex: 0 0 180px;">
+                  <label>Output Mode</label>
+                  <select id="output-mode">
+                    <option value="static">Static (Direct)</option>
+                    <option value="observer">Observer (Async)</option>
+                    <option value="custom_script">Custom Script</option>
+                  </select>
+                </div>
+
+                <div class="form-group" id="delay-group" style="flex: 0 0 100px;">
+                  <label>Delay (ms)</label>
+                  <input type="number" id="submit-delay" value="0">
+                </div>
+                
+                <!-- Selector Inputs (Visible for Static/Observer) -->
+                <div class="form-group" id="selector-group" style="flex: 1;">
+                  <label>Container Selector <span style="font-weight:normal; color:#666">(Element to extract)</span></label>
+                  <input type="text" id="output-selector" placeholder="e.g. div.result">
+                </div>
+
+                <div class="form-group" id="trigger-group" style="flex: 1;">
+                  <label>Trigger Selector <span style="font-weight:normal; color:#666">(Optional: Stop on NEW element)</span></label>
+                  <input type="text" id="trigger-selector" placeholder="e.g. button.copy">
+                </div>
+              </div>
+
+              <!-- Strategy & Attributes (Visible for Static/Observer) -->
+              <div id="strategy-options" style="margin-top: 5px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label>Extraction Strategy</label>
+                  <div style="display:flex; gap:10px;">
+                    <select id="selector-strategy" style="flex:1">
+                      <option value="first">First Match (Default)</option>
+                      <option value="last">Last Match (e.g. latest chat msg)</option>
+                      <option value="all_text">Combine All Text (newline separated)</option>
+                      <option value="attribute">Get Attribute Value</option>
+                    </select>
+                    <input type="text" id="attribute-name" placeholder="Attribute name (e.g. href, src)" style="flex:1; display:none;">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Custom Script Editor (Visible for Custom Script) -->
+              <div id="custom-script-group" style="display:none; margin-top: 10px;">
+                <div class="form-group">
+                  <label>Custom Script <span style="font-weight:normal; color:#666">(Executed in Main World)</span></label>
+                  <p style="font-size:12px; color:#666; margin:0 0 8px 0; line-height: 1.4;">
+                    Write a function body that returns a value or a Promise.<br>
+                    Available variables: <code>document</code>, <code>window</code>.
+                  </p>
+                  <textarea id="custom-script" rows="10" style="font-family: monospace; font-size: 12px; background: #fafafa;" placeholder="// Example: Return all links&#10;const links = document.querySelectorAll('a');&#10;return Array.from(links).map(a => a.href);"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+              <button type="button" class="btn btn-secondary" id="show-schema-btn">Show Schema</button>
+              <button type="submit" class="btn btn-primary" style="width: 150px;">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <dialog id="schema-dialog">
+    <div class="dialog-header">
+      <h3>Tool Registration Schema</h3>
+      <button type="button" class="btn btn-sm btn-secondary" id="close-dialog-btn">Close</button>
+    </div>
+    <div class="code-block" id="schema-code"></div>
+    <button type="button" class="btn btn-primary" id="copy-schema-btn" style="width:100%">Copy to Clipboard</button>
+  </dialog>
+
+  <input type="file" id="file-input" style="display:none" accept=".json">
+  <script type="module" src="../../dist/options/options.js"></script>
+</body>
+</html>
