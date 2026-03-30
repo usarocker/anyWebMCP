@@ -112,6 +112,21 @@ return new Promise((resolve) => {
 
 ---
 
+## 🔍 Debugging & Inspection
+
+To verify your registered tools and monitor execution, you can use the following methods:
+
+### 1. Built-in Chrome WebMCP DevTools (Canary)
+Starting with **Chrome 146 Canary**, Google has enabled a default **WebMCP Developer Tools** panel. 
+- Open **Inspect (F12)** on any page.
+- Look for the **WebMCP** tab.
+- Here you can view real-time **Tool Contracts**, inspect registered tools, and monitor browser permission transitions as they happen.
+
+### 2. WebMCP - Model Context Tool Inspector
+For stable Chrome versions or enhanced visualization, you can download the **WebMCP - Model Context Tool Inspector** from the [Chrome Web Store](https://chrome.google.com/webstore). This extension provides a dedicated interface to browse all active WebMCP tools and their schemas.
+
+---
+
 ## 🏗 Architecture
 
 anyWebMCP uses a **Dual-Track Bridge**:
