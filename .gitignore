@@ -1,1 +1,19 @@
-node_modules/\ndist/\n.DS_Store
+# Dependencies
+node_modules/
+pnpm-lock.yaml
+
+# Build output
+dist/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Hidden tool/backup folders
+.backup/
+.prompt_logs/
+.gemini/
+.env
+
+# TypeScript
+*.tsbuildinfo
