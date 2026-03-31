@@ -20,13 +20,17 @@ async function init() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab && tab.url) {
     const matched = state.configs.filter(c => {
-      const regex = new RegExp(c.urlPattern.replace(/\*/g, '.*'));
+      // Improved URL Pattern matching: Escape regex chars except *
+      const regexPattern = c.urlPattern
+        .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+        .replace(/\*/g, '.*');
+      const regex = new RegExp(`^${regexPattern}$`, 'i');
       return regex.test(tab.url!);
     });
 
     if (matched.length > 0) {
       statusDiv.textContent = `Matched ${matched.length} tool(s)`;
-      statusDiv.style.color = 'green';
+      statusDiv.style.color = '#2e7d32'; // Consistent green
     } else {
       statusDiv.textContent = 'No tools matched for this page';
     }
