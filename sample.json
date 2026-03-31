@@ -1,0 +1,38 @@
+{
+  "version": "1.0",
+  "timestamp": 1774916927008,
+  "configs": [
+    {
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "description": "search city by zipcode",
+      "enabled": true,
+      "entryUrl": "https://tools.usps.com/zip-code-lookup.htm?citybyzipcode",
+      "id": "4ce97d99-cb8a-4ee3-98d6-37ec6ad593c8",
+      "inputs": [
+        {
+          "description": "zipcode",
+          "name": "zipcode",
+          "selector": "input[id=\"tZip\"]"
+        }
+      ],
+      "output": {
+        "attributeName": "",
+        "customScript": "",
+        "mode": "observer",
+        "selector": "div[id=\"cityByZipDiv\"]",
+        "strategy": "first",
+        "timeout": 5000,
+        "triggerSelector": ""
+      },
+      "submit": {
+        "delay": 0,
+        "selector": "a[id=\"cities-by-zip-code\"]",
+        "waitForNavigation": false
+      },
+      "toolName": "city_by_zipcode",
+      "urlPattern": "https://tools.usps.com/zip-code-lookup.htm*"
+    }
+  ]
+}
