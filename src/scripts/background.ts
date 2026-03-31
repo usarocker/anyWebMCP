@@ -1,5 +1,5 @@
 import { getAppState } from "../lib/storage.js";
-import { BackgroundTask, WebMcpBridgeMessage, WebMcpConfig, ANYWEBMCP_MSG_TYPES, ANYWEBMCP_SOURCES } from "../lib/types.js";
+import { BackgroundTask, WebMcpBridgeMessage, WebMcpConfig, ANYWEBMCP_MSG_TYPES, ANYWEBMCP_SOURCES, ToolResponse } from "../lib/types.js";
 
 /**
  * anyWebMCP Background Service Worker
@@ -45,6 +45,13 @@ chrome.runtime.onMessage.addListener((msg: WebMcpBridgeMessage, sender, sendResp
 
     console.log(`[anyWebMCP] Task ${taskId} completed.`, msg);
     
+    // Inject runtime metadata if available
+    if (task.startTime && msg.payload.result && typeof msg.payload.result === 'object') {
+       const result = msg.payload.result as ToolResponse;
+       if (!result.meta) result.meta = {};
+       result.meta.runtime_ms = Date.now() - task.startTime;
+    }
+
     // Relay back to caller
     if (task.callerTabId) {
       chrome.tabs.sendMessage(task.callerTabId, msg).catch(() => {});
@@ -66,6 +73,7 @@ async function handleExecutionRequest(msg: any, sender: chrome.runtime.MessageSe
 
   const taskId = id.toString();
   const callerTabId = sender.tab?.id;
+  const startTime = Date.now();
   
   try {
     let workerTabId = await findWorkerTab(config, callerTabId);
@@ -80,7 +88,7 @@ async function handleExecutionRequest(msg: any, sender: chrome.runtime.MessageSe
 
     if (!workerTabId) throw new Error(`No active tab matches pattern.`);
 
-    const task: BackgroundTask = { id: taskId, config, params, status, callerTabId, workerTabId };
+    const task: BackgroundTask = { id: taskId, config, params, status, callerTabId, workerTabId, startTime };
     activeTasks.set(taskId, task);
 
     if (status === 'SUBMITTING') {
@@ -88,9 +96,21 @@ async function handleExecutionRequest(msg: any, sender: chrome.runtime.MessageSe
     }
   } catch (err: any) {
     console.error(`[anyWebMCP] Routing Error:`, err);
+    
+    // MCP Standardized Error Response
+    const errorResult: ToolResponse = {
+      content: [{ type: "text", text: err.message }],
+      isError: true,
+      meta: { runtime_ms: Date.now() - startTime }
+    };
+
     const errorMsg = {
       type: ANYWEBMCP_MSG_TYPES.EXECUTE_RESPONSE,
-      payload: { jsonrpc: "2.0", error: { code: -32001, message: err.message }, id: taskId },
+      payload: { 
+        jsonrpc: "2.0", 
+        result: errorResult, // Using result for MCP compliance with isError flag
+        id: taskId 
+      },
       from: ANYWEBMCP_SOURCES.BACKGROUND,
     };
     if (callerTabId) chrome.tabs.sendMessage(callerTabId, errorMsg).catch(() => {});

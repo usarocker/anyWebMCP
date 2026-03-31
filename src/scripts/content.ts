@@ -1,4 +1,4 @@
-import { WebMcpBridgeMessage, WebMcpConfig, ANYWEBMCP_MSG_TYPES, ANYWEBMCP_SOURCES } from "../lib/types.js";
+import { WebMcpBridgeMessage, WebMcpConfig, ANYWEBMCP_MSG_TYPES, ANYWEBMCP_SOURCES, ToolResponse } from "../lib/types.js";
 import { fillInputs, submitForm, scrapeOutput } from "../lib/dom_utils.js";
 import { getAppState } from "../lib/storage.js";
 
@@ -68,27 +68,39 @@ window.addEventListener('message', async (event) => {
     // [Local Track]: SPA Mode
     if (config && !config.submit.waitForNavigation) {
       console.log(`[anyWebMCP] Executing locally (SPA Mode): ${method}`);
+      const startTime = Date.now();
       try {
         await fillInputs(config.inputs, params);
         await new Promise(r => setTimeout(r, 500)); 
         await submitForm(config.submit);
         
-        let result;
+        let rawResult;
         if (config.output.mode === 'custom_script' && config.output.customScript) {
-          result = await executeCustomScript(config.output.customScript, id.toString());
+          rawResult = await executeCustomScript(config.output.customScript, id.toString());
         } else {
-          result = await scrapeOutput(config.output);
+          rawResult = await scrapeOutput(config.output);
         }
+
+        // Standardized MCP Response
+        const toolResult: ToolResponse = {
+          content: [{ type: "text", text: typeof rawResult === 'string' ? rawResult : JSON.stringify(rawResult) }],
+          meta: { runtime_ms: Date.now() - startTime }
+        };
         
         window.postMessage({
           type: ANYWEBMCP_MSG_TYPES.EXECUTE_RESPONSE,
-          payload: { jsonrpc: '2.0', result, id },
+          payload: { jsonrpc: '2.0', result: toolResult, id },
           from: ANYWEBMCP_SOURCES.CONTENT
         }, '*');
       } catch (error: any) {
+        const errorResult: ToolResponse = {
+          content: [{ type: "text", text: error.message }],
+          isError: true,
+          meta: { runtime_ms: Date.now() - startTime }
+        };
         window.postMessage({
           type: ANYWEBMCP_MSG_TYPES.EXECUTE_RESPONSE,
-          payload: { jsonrpc: '2.0', error: { code: -32000, message: error.message }, id },
+          payload: { jsonrpc: '2.0', result: errorResult, id },
           from: ANYWEBMCP_SOURCES.CONTENT
         }, '*');
       }
@@ -116,24 +128,33 @@ chrome.runtime.onMessage.addListener((msg: WebMcpBridgeMessage, sender, sendResp
           await submitForm(config.submit);
           sendResponse({ success: true });
         } else if (command === 'SCRAPE_ONLY') {
-          let result;
+          let rawResult;
           if (config.output.mode === 'custom_script' && config.output.customScript) {
-            result = await executeCustomScript(config.output.customScript, requestId);
+            rawResult = await executeCustomScript(config.output.customScript, requestId);
           } else {
-            result = await scrapeOutput(config.output);
+            rawResult = await scrapeOutput(config.output);
           }
           
+          // Note: Runtime metadata for Managed Track is handled in background.ts
+          const toolResult: ToolResponse = {
+            content: [{ type: "text", text: typeof rawResult === 'string' ? rawResult : JSON.stringify(rawResult) }]
+          };
+
           chrome.runtime.sendMessage({
             type: ANYWEBMCP_MSG_TYPES.EXECUTE_RESPONSE,
-            payload: { jsonrpc: '2.0', result, id: requestId },
+            payload: { jsonrpc: '2.0', result: toolResult, id: requestId },
             from: ANYWEBMCP_SOURCES.CONTENT
           });
           sendResponse({ success: true });
         }
       } catch (error: any) {
+        const errorResult: ToolResponse = {
+          content: [{ type: "text", text: error.message }],
+          isError: true
+        };
         chrome.runtime.sendMessage({
           type: ANYWEBMCP_MSG_TYPES.EXECUTE_RESPONSE,
-          payload: { jsonrpc: '2.0', error: { code: -32000, message: error.message }, id: requestId },
+          payload: { jsonrpc: '2.0', result: errorResult, id: requestId },
           from: ANYWEBMCP_SOURCES.CONTENT
         });
         sendResponse({ success: false, error: error.message });

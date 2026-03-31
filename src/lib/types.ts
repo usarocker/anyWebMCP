@@ -69,6 +69,24 @@ export interface JsonRpcResponse {
   id: string | number;
 }
 
+// --- MCP / WebMCP Protocol Types ---
+
+export type TextContent = { type: "text"; text: string };
+export type ImageContent = { type: "image"; data: string; mimeType: string };
+export type ResourceContent = { 
+  type: "resource"; 
+  resource: { uri: string; mimeType: string; text?: string; blob?: string } 
+};
+
+export interface ToolResponse {
+  content: Array<TextContent | ImageContent | ResourceContent>;
+  isError?: boolean;
+  meta?: {
+    runtime_ms?: number;
+    tokens_used?: number;
+  };
+}
+
 // Background Task Types
 export type TaskStatus = 'WAITING_START' | 'SUBMITTING' | 'WAITING_RESULT' | 'SCRAPING' | 'COMPLETED' | 'FAILED';
 
@@ -79,6 +97,7 @@ export interface BackgroundTask {
   status: TaskStatus;
   callerTabId?: number;
   workerTabId?: number;
+  startTime?: number; // Added for runtime tracking
 }
 
 // --- ANYWEBMCP Namespace Constants ---
