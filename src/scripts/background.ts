@@ -10,7 +10,11 @@ const activeTasks = new Map<string, BackgroundTask>();
 
 function matchUrl(url: string, pattern: string): boolean {
   try {
-    const regex = new RegExp(pattern.replace(/\*/g, '.*'));
+    // Robust URL Pattern matching: Escape regex chars except *
+    const regexPattern = pattern
+      .replace(/[.+^${}()|[\]\\]/g, '\\$&') // Escape regex special chars
+      .replace(/\*/g, '.*');               // Convert * to wildcard
+    const regex = new RegExp(`^${regexPattern}$`, 'i');
     return regex.test(url);
   } catch (e) {
     return false;

@@ -12,7 +12,11 @@ async function syncConfigs() {
   const state = await getAppState();
   if (state.globalEnabled) {
     const newConfigs = state.configs.filter(c => {
-      const regex = new RegExp(c.urlPattern.replace(/\*/g, '.*'));
+      // Escape special characters but allow * to be a wildcard
+      const pattern = c.urlPattern
+        .replace(/[.+^${}()|[\]\\]/g, '\\$&') // Escape regex special chars
+        .replace(/\*/g, '.*');               // Convert * to .*
+      const regex = new RegExp(`^${pattern}$`, 'i');
       return regex.test(window.location.href);
     });
     activeConfigs = newConfigs;
